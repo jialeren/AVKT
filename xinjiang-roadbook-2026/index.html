@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>2026 国庆新疆北疆环线路书</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root {
+      --paper: #f6f3ea;
+      --surface: #fffdf7;
+      --line: #d6d0c0;
+      --ink: #1f2937;
+      --muted: #5f6b7a;
+      --green: #2d6a4f;
+      --teal: #15616d;
+      --orange: #c2410c;
+      --blue: #2563eb;
+      --violet: #6d28d9;
+      --amber: #b45309;
+      --danger: #b91c1c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.5;
+    }
+
+    .shell {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(30px, 4vw, 52px);
+      letter-spacing: 0;
+      line-height: 1.05;
+    }
+
+    .lead {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    button {
+      border: 1px solid #c9c2b4;
+      background: #ffffff;
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 10px 13px;
+      font-weight: 700;
+      cursor: pointer;
+      min-height: 42px;
+    }
+
+    button:hover,
+    button:focus-visible {
+      border-color: #8d8274;
+      outline: none;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    #map {
+      width: 100%;
+      min-height: 650px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #dbe7df;
+    }
+
+    .side {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 10px 26px rgba(31, 41, 55, 0.08);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 20px;
+      letter-spacing: 0;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .metric {
+      background: #f4f0e6;
+      border: 1px solid #e4dccd;
+      border-radius: 8px;
+      padding: 11px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      line-height: 1.1;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .legend-row {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .legend-line {
+      height: 5px;
+      border-radius: 999px;
+      background: var(--green);
+    }
+
+    .legend-line.dash {
+      background: repeating-linear-gradient(90deg, var(--danger) 0 14px, transparent 14px 24px);
+      border: 1px solid rgba(185, 28, 28, 0.25);
+    }
+
+    .legend-line.alt {
+      background: repeating-linear-gradient(90deg, #6b7280 0 12px, transparent 12px 22px);
+      border: 1px solid rgba(107, 114, 128, 0.25);
+    }
+
+    .notice {
+      border-left: 5px solid var(--orange);
+      background: #fff7ed;
+      border-radius: 8px;
+      padding: 12px 13px;
+      color: #7c2d12;
+      font-size: 14px;
+    }
+
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(160px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      min-height: 244px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 26px rgba(31, 41, 55, 0.07);
+    }
+
+    .day-card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      right: 0;
+      height: 7px;
+      background: var(--teal);
+    }
+
+    .day-card[data-tone="green"]::before { background: var(--green); }
+    .day-card[data-tone="amber"]::before { background: var(--amber); }
+    .day-card[data-tone="orange"]::before { background: var(--orange); }
+    .day-card[data-tone="blue"]::before { background: var(--blue); }
+    .day-card[data-tone="violet"]::before { background: var(--violet); }
+
+    .day-card.active {
+      border-color: #111827;
+      box-shadow: 0 0 0 3px rgba(31, 41, 55, 0.12), 0 14px 30px rgba(31, 41, 55, 0.12);
+    }
+
+    .date {
+      display: block;
+      margin-top: 8px;
+      font-weight: 900;
+      font-size: 24px;
+    }
+
+    .route-title {
+      margin: 6px 0 10px;
+      font-weight: 800;
+      font-size: 17px;
+      min-height: 50px;
+    }
+
+    .day-card p {
+      margin: 0 0 8px;
+      color: #374151;
+      font-size: 14px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      background: #eef2ff;
+      color: #3730a3;
+    }
+
+    .tag.danger {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .tag.good {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 10px 9px;
+      border-bottom: 1px solid #e5dfd2;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .checklist {
+      margin: 0;
+      padding-left: 20px;
+      color: #374151;
+    }
+
+    .checklist li {
+      margin: 7px 0;
+    }
+
+    .leaflet-popup-content {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      margin: 12px 14px;
+      line-height: 1.45;
+    }
+
+    .pin {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 13px;
+      border: 3px solid #fff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .pin.core { background: var(--green); }
+    .pin.drive { background: var(--teal); }
+    .pin.risk { background: var(--orange); }
+    .pin.city { background: var(--violet); }
+
+    @media (max-width: 1180px) {
+      .layout,
+      .tables {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        min-height: 560px;
+      }
+
+      .days {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        padding: 14px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      #map {
+        min-height: 500px;
+      }
+
+      .days {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .shell {
+        max-width: none;
+        padding: 0;
+      }
+
+      .actions,
+      .leaflet-control-container {
+        display: none !important;
+      }
+
+      .layout,
+      .tables {
+        grid-template-columns: 1fr;
+      }
+
+      #map {
+        min-height: 520px;
+        break-inside: avoid;
+      }
+
+      .days {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .panel,
+      .day-card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>2026 国庆新疆北疆环线路书</h1>
+        <p class="lead">10.1-10.7｜乌鲁木齐进出｜S21 北上阿勒泰，喀纳斯秋色，独库北段看天气，那拉提返乌。</p>
+      </div>
+      <div class="actions">
+        <button type="button" id="fitAll">全线视图</button>
+        <button type="button" id="toggleAlt">显示独库关闭备选</button>
+        <button type="button" onclick="window.print()">打印/存 PDF</button>
+      </div>
+    </header>
+
+    <section class="layout" aria-label="地图和行程摘要">
+      <div id="map" aria-label="新疆国庆路线地图"></div>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>行程摘要</h2>
+          <div class="summary-grid">
+            <div class="metric"><strong>7 天</strong><span>10.1-10.7</span></div>
+            <div class="metric"><strong>约 3000 km</strong><span>按实际导航浮动</span></div>
+            <div class="metric"><strong>5 晚换宿</strong><span>阿勒泰/贾登峪/布尔津/奎屯/那拉提/乌市</span></div>
+            <div class="metric"><strong>1 个风险日</strong><span>10.5 独库北段</span></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h2>图例</h2>
+          <div class="legend">
+            <div class="legend-row"><span class="legend-line"></span><span>主线：按你给的行程绘制</span></div>
+            <div class="legend-row"><span class="legend-line dash"></span><span>独库北段：季节和天气强相关</span></div>
+            <div class="legend-row"><span class="legend-line alt"></span><span>备选：独库关闭时绕伊犁方向</span></div>
+          </div>
+        </section>
+
+        <section class="notice">
+          这是一份点位级路书，不是逐弯导航轨迹。国庆期间景区排队、区间车、道路管制会显著影响时间；每天出发前按高德/百度和当地交警通告重算。
+        </section>
+
+        <section class="panel">
+          <h2>执行优先级</h2>
+          <ol class="checklist">
+            <li>提前锁定贾登峪、布尔津、那拉提住宿。</li>
+            <li>喀纳斯、禾木、那拉提门票和区间车提前预约。</li>
+            <li>10.5 清晨确认独库北段通行，再决定是否走备选。</li>
+            <li>山区日删景点保车程，避免夜间跑山路。</li>
+          </ol>
+        </section>
+      </aside>
+    </section>
+
+    <section class="days" aria-label="每日路书">
+      <article class="day-card active" data-day="d1" data-tone="teal">
+        <span class="date">10.1</span>
+        <div class="route-title">乌鲁木齐天山机场 → 阿勒泰</div>
+        <p>约 650-700 km，7.5-9 h。落地取车、补给、满油后直接北上。</p>
+        <span class="tag danger">赶路日</span>
+      </article>
+
+      <article class="day-card" data-day="d2" data-tone="green">
+        <span class="date">10.2</span>
+        <div class="route-title">阿勒泰 → 阿禾公路 → 禾木 → 贾登峪</div>
+        <p>阿禾公路只抓核心景观段；禾木短游后住贾登峪，给喀纳斯抢时间。</p>
+        <span class="tag good">秋色日</span>
+      </article>
+
+      <article class="day-card" data-day="d3" data-tone="green">
+        <span class="date">10.3</span>
+        <div class="route-title">喀纳斯景区一日 → 布尔津</div>
+        <p>重点三湾、喀纳斯湖；观鱼台看天气和排队。傍晚出景区去布尔津。</p>
+        <span class="tag good">景区日</span>
+      </article>
+
+      <article class="day-card" data-day="d4" data-tone="amber">
+        <span class="date">10.4</span>
+        <div class="route-title">布尔津休整 → 魔鬼城 → 奎屯/独山子</div>
+        <p>上午放慢，下午乌尔禾世界魔鬼城 2-3 h；晚上住近独库入口。</p>
+        <span class="tag">缓冲日</span>
+      </article>
+
+      <article class="day-card" data-day="d5" data-tone="orange">
+        <span class="date">10.5</span>
+        <div class="route-title">独库公路北段 → 那拉提</div>
+        <p>独山子、哈希勒根、乔尔玛、那拉提。10 月有降雪封路风险。</p>
+        <span class="tag danger">看天通行</span>
+      </article>
+
+      <article class="day-card" data-day="d6" data-tone="blue">
+        <span class="date">10.6</span>
+        <div class="route-title">那拉提半日 → 乌鲁木齐</div>
+        <p>空中草原或河谷草原二选一；午后返乌，别把景区玩满。</p>
+        <span class="tag">返程日</span>
+      </article>
+
+      <article class="day-card" data-day="d7" data-tone="violet">
+        <span class="date">10.7</span>
+        <div class="route-title">新疆博物馆 → 国际大巴扎</div>
+        <p>上午博物馆，下午大巴扎；按航班时间回机场。</p>
+        <span class="tag">城市日</span>
+      </article>
+    </section>
+
+    <section class="tables" aria-label="驾驶段和点位清单">
+      <section class="panel">
+        <h2>驾驶段</h2>
+        <table>
+          <thead>
+            <tr><th>日期</th><th>主驾驶段</th><th>建议控制点</th><th>备注</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>10.1</td><td>天山机场 → 阿勒泰</td><td>午前取车更稳</td><td>中午后落地建议改住福海/北屯。</td></tr>
+            <tr><td>10.2</td><td>阿勒泰 → 阿禾公路 → 禾木 → 贾登峪</td><td>16:30 左右离开禾木</td><td>国庆区间车和停车会吃时间。</td></tr>
+            <tr><td>10.3</td><td>贾登峪 → 喀纳斯 → 布尔津</td><td>早进早出</td><td>不建议当天加白哈巴。</td></tr>
+            <tr><td>10.4</td><td>布尔津 → 乌尔禾 → 奎屯/独山子</td><td>魔鬼城 2-3 h</td><td>住宿尽量靠独库北段入口。</td></tr>
+            <tr><td>10.5</td><td>独库北段 → 那拉提</td><td>出发前查通行</td><td>封路则走地图中的备选绕行。</td></tr>
+            <tr><td>10.6</td><td>那拉提 → 乌鲁木齐</td><td>午后必须返程</td><td>那拉提只选一个景区线路。</td></tr>
+            <tr><td>10.7</td><td>乌市市内 → 机场</td><td>预留安检和还车</td><td>博物馆提前预约。</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>导航关键词</h2>
+        <table>
+          <thead>
+            <tr><th>顺序</th><th>搜索点位</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>乌鲁木齐天山国际机场</td></tr>
+            <tr><td>2</td><td>阿勒泰市</td></tr>
+            <tr><td>3</td><td>阿禾公路 / 禾木村</td></tr>
+            <tr><td>4</td><td>贾登峪游客服务中心</td></tr>
+            <tr><td>5</td><td>喀纳斯景区</td></tr>
+            <tr><td>6</td><td>布尔津县</td></tr>
+            <tr><td>7</td><td>乌尔禾世界魔鬼城</td></tr>
+            <tr><td>8</td><td>独山子大峡谷 / 独库公路北段入口</td></tr>
+            <tr><td>9</td><td>乔尔玛 / 那拉提游客服务中心</td></tr>
+            <tr><td>10</td><td>新疆维吾尔自治区博物馆 / 新疆国际大巴扎</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const stops = [
+      { id: "urc", n: "乌鲁木齐天山国际机场", lat: 43.907, lng: 87.474, type: "drive", day: "10.1" },
+      { id: "fuhai", n: "福海/北屯补给点", lat: 47.180, lng: 87.610, type: "drive", day: "10.1" },
+      { id: "altay", n: "阿勒泰市", lat: 47.845, lng: 88.139, type: "drive", day: "10.1/10.2" },
+      { id: "ahe", n: "阿禾公路核心景观段", lat: 48.270, lng: 87.930, type: "core", day: "10.2" },
+      { id: "hemu", n: "禾木村", lat: 48.578, lng: 87.434, type: "core", day: "10.2" },
+      { id: "jiadengyu", n: "贾登峪", lat: 48.502, lng: 87.132, type: "core", day: "10.2/10.3" },
+      { id: "kanas", n: "喀纳斯湖/换乘中心", lat: 48.721, lng: 87.033, type: "core", day: "10.3" },
+      { id: "burqin", n: "布尔津", lat: 47.704, lng: 86.875, type: "core", day: "10.3/10.4" },
+      { id: "urho", n: "乌尔禾世界魔鬼城", lat: 46.135, lng: 85.731, type: "risk", day: "10.4" },
+      { id: "kuitun", n: "奎屯/独山子", lat: 44.327, lng: 84.889, type: "risk", day: "10.4/10.5" },
+      { id: "duku0", n: "独库公路北段入口", lat: 44.303, lng: 84.858, type: "risk", day: "10.5" },
+      { id: "hashilegen", n: "哈希勒根达坂附近", lat: 43.760, lng: 84.585, type: "risk", day: "10.5" },
+      { id: "qiaerma", n: "乔尔玛", lat: 43.840, lng: 84.720, type: "risk", day: "10.5" },
+      { id: "nalati", n: "那拉提", lat: 43.235, lng: 84.263, type: "core", day: "10.5/10.6" },
+      { id: "gongnaisi", n: "巩乃斯/返乌中转", lat: 43.050, lng: 84.800, type: "drive", day: "10.6" },
+      { id: "hejing", n: "和静/巴州方向", lat: 42.318, lng: 86.382, type: "drive", day: "10.6" },
+      { id: "turpan", n: "吐鲁番/托克逊方向", lat: 42.950, lng: 88.650, type: "drive", day: "10.6" },
+      { id: "urumqi", n: "乌鲁木齐市区", lat: 43.825, lng: 87.616, type: "city", day: "10.6/10.7" },
+      { id: "museum", n: "新疆维吾尔自治区博物馆", lat: 43.822, lng: 87.586, type: "city", day: "10.7" },
+      { id: "bazaar", n: "新疆国际大巴扎", lat: 43.783, lng: 87.616, type: "city", day: "10.7" }
+    ];
+
+    const p = (id) => {
+      const stop = stops.find((item) => item.id === id);
+      return [stop.lat, stop.lng];
+    };
+
+    const segments = [
+      {
+        id: "d1",
+        name: "10.1 机场到阿勒泰",
+        color: "#15616d",
+        points: [p("urc"), [44.35, 87.55], [45.35, 87.70], [46.40, 87.58], p("fuhai"), [47.44, 87.87], p("altay")]
+      },
+      {
+        id: "d2",
+        name: "10.2 阿禾公路与禾木",
+        color: "#2d6a4f",
+        points: [p("altay"), [48.08, 88.10], p("ahe"), [48.45, 87.73], p("hemu"), p("jiadengyu")]
+      },
+      {
+        id: "d3",
+        name: "10.3 喀纳斯到布尔津",
+        color: "#2d6a4f",
+        points: [p("jiadengyu"), [48.63, 87.15], p("kanas"), [48.63, 87.15], p("jiadengyu"), [48.16, 86.98], p("burqin")]
+      },
+      {
+        id: "d4",
+        name: "10.4 布尔津到奎屯",
+        color: "#b45309",
+        points: [p("burqin"), [46.95, 86.45], p("urho"), [45.60, 85.35], p("kuitun")]
+      },
+      {
+        id: "d5",
+        name: "10.5 独库北段到那拉提",
+        color: "#b91c1c",
+        dash: "12 10",
+        points: [p("kuitun"), p("duku0"), [44.10, 84.80], p("hashilegen"), p("qiaerma"), [43.52, 84.49], p("nalati")]
+      },
+      {
+        id: "d6",
+        name: "10.6 那拉提返乌",
+        color: "#2563eb",
+        points: [p("nalati"), p("gongnaisi"), p("hejing"), p("turpan"), p("urumqi")]
+      },
+      {
+        id: "d7",
+        name: "10.7 乌鲁木齐市内",
+        color: "#6d28d9",
+        points: [p("urumqi"), p("museum"), p("bazaar"), p("urc")]
+      }
+    ];
+
+    const altDuku = {
+      id: "alt-duku",
+      name: "独库关闭备选：奎屯绕伊犁方向到那拉提",
+      color: "#6b7280",
+      dash: "10 10",
+      points: [p("kuitun"), [44.60, 82.89], [44.60, 81.17], [43.92, 81.32], [43.43, 83.26], p("nalati")]
+    };
+
+    const map = L.map("map", {
+      zoomControl: true,
+      scrollWheelZoom: true
+    });
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    const allRoutePoints = [];
+    const routeLayers = new Map();
+    const markerLayers = [];
+
+    segments.forEach((seg) => {
+      const layer = L.polyline(seg.points, {
+        color: seg.color,
+        weight: seg.id === "d5" ? 7 : 6,
+        opacity: 0.92,
+        dashArray: seg.dash || null,
+        lineCap: "round",
+        lineJoin: "round"
+      }).bindTooltip(seg.name, { sticky: true });
+      layer.addTo(map);
+      routeLayers.set(seg.id, layer);
+      seg.points.forEach((point) => allRoutePoints.push(point));
+    });
+
+    const altLayer = L.polyline(altDuku.points, {
+      color: altDuku.color,
+      weight: 6,
+      opacity: 0.78,
+      dashArray: altDuku.dash,
+      lineCap: "round",
+      lineJoin: "round"
+    }).bindTooltip(altDuku.name, { sticky: true });
+
+    stops.forEach((stop, index) => {
+      const number = index + 1;
+      const icon = L.divIcon({
+        className: "",
+        html: `<div class="pin ${stop.type}">${number}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
+        popupAnchor: [0, -16]
+      });
+      const marker = L.marker([stop.lat, stop.lng], { icon })
+        .bindPopup(`<strong>${number}. ${stop.n}</strong><br>行程：${stop.day}<br>坐标：${stop.lat.toFixed(3)}, ${stop.lng.toFixed(3)}`);
+      marker.addTo(map);
+      markerLayers.push(marker);
+    });
+
+    const fitFull = () => {
+      const bounds = L.latLngBounds(allRoutePoints);
+      map.fitBounds(bounds, { padding: [36, 36] });
+    };
+
+    const focusSegment = (id) => {
+      document.querySelectorAll(".day-card").forEach((card) => {
+        card.classList.toggle("active", card.dataset.day === id);
+      });
+
+      routeLayers.forEach((layer, key) => {
+        const isActive = key === id;
+        layer.setStyle({
+          weight: isActive ? 10 : (key === "d5" ? 7 : 6),
+          opacity: isActive ? 1 : 0.36
+        });
+        if (isActive) {
+          layer.bringToFront();
+          map.fitBounds(layer.getBounds(), { padding: [54, 54] });
+        }
+      });
+
+      if (map.hasLayer(altLayer)) {
+        altLayer.setStyle({ opacity: id === "d5" ? 0.82 : 0.28 });
+      }
+    };
+
+    document.querySelectorAll(".day-card").forEach((card) => {
+      card.addEventListener("click", () => focusSegment(card.dataset.day));
+    });
+
+    document.getElementById("fitAll").addEventListener("click", () => {
+      document.querySelectorAll(".day-card").forEach((card) => card.classList.remove("active"));
+      routeLayers.forEach((layer, key) => {
+        layer.setStyle({ weight: key === "d5" ? 7 : 6, opacity: 0.92 });
+      });
+      if (map.hasLayer(altLayer)) {
+        altLayer.setStyle({ opacity: 0.78 });
+      }
+      fitFull();
+    });
+
+    document.getElementById("toggleAlt").addEventListener("click", (event) => {
+      if (map.hasLayer(altLayer)) {
+        map.removeLayer(altLayer);
+        event.currentTarget.textContent = "显示独库关闭备选";
+      } else {
+        altLayer.addTo(map);
+        altLayer.bringToBack();
+        event.currentTarget.textContent = "隐藏独库关闭备选";
+        const bounds = L.latLngBounds([...allRoutePoints, ...altDuku.points]);
+        map.fitBounds(bounds, { padding: [36, 36] });
+      }
+    });
+
+    L.control.layers(null, {
+      "独库关闭备选": altLayer
+    }, { collapsed: false, position: "bottomright" }).addTo(map);
+
+    fitFull();
+  </script>
+</body>
+</html>
